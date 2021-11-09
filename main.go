@@ -14,14 +14,14 @@ import (
 )
 
 var M = flag.String("M", "search", "Mode selection (clean, scan, search)")
-var D = flag.String("D", "./bob-index.db", "Location of database")
-var G = flag.String("G", "/home/ftpd/glftpd/site", "gl root path")
+var D = flag.String("D", "/ftp-data/bob/bob-index.db", "Location of database")
+var G = flag.String("G", "/home/ftpd/glftpd", "gl root path")
 var P = flag.String("P", "/mp3", "Scan path (inside glroot)")
 var L = flag.Int("L", 50, "Limit number of search results")
 var s = flag.String("s", "test", "search string")
 
 func clean(db *sql.DB, glroot string) {
-	fmt.Printf("Cleaning up database at %v\n", *D)
+	fmt.Printf("Cleaning up database at %v\n", *G+*D)
 	// Compile a slice with all release paths that no longer exist
 	rows, err := db.Query("SELECT path FROM release")
 	if err != nil {
@@ -115,15 +115,16 @@ func search(db *sql.DB, search string, limit int) {
 }
 
 func main() {
-	db, err := sql.Open("sqlite3", "file:"+*D+"?cache=shared&mode=rwc&_journal_mode=WAL")
+	flag.Parse()
+	db, err := sql.Open("sqlite3", "file:"+*G+*D+"?cache=shared&mode=rwc&_journal_mode=WAL")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
 
 	// Create and initialize the database if it does not exist
-	if _, err := os.Stat(*D); errors.Is(err, os.ErrNotExist) {
-		fmt.Printf("Could not find database at %s, creating...\n", *D)
+	if _, err := os.Stat(*G + *D); errors.Is(err, os.ErrNotExist) {
+		fmt.Printf("Could not find database at %s, creating...\n", *G+*D)
 		sqlStmt := `
 		CREATE TABLE release (path text, lower text, name text, UNIQUE(path));
 		DELETE FROM release;
@@ -134,12 +135,11 @@ func main() {
 			return
 		}
 	}
-	flag.Parse()
 	switch *M {
 	case "clean":
 		clean(db, *G)
 	case "scan":
-		scan(db, *G, *P)
+		scan(db, *G+"/site", *P)
 	case "search":
 		search(db, *s, *L)
 	default:

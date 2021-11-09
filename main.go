@@ -139,7 +139,7 @@ func main() {
 	}
 	switch *M {
 	case "clean":
-		clean(db, *G)
+		clean(db, *G+"/site")
 	case "scan":
 		scan(db, *G+"/site", *P)
 	case "search":

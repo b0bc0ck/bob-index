@@ -45,17 +45,19 @@ func clean(db *sql.DB, glroot string) {
 	}
 	rows.Close()
 	// Delete the results from the database
-	for _, path := range notFound {
-		result, err := db.Exec("DELETE FROM release WHERE path = ?", path)
-		if err != nil {
-			log.Fatal(err)
-		}
-		nAffected, err := result.RowsAffected()
-		if err != nil {
-			log.Fatal(err)
-		}
-		if nAffected != 0 {
-			fmt.Printf("DELETE %s\n", path)
+	if len(notFound) != 0 {
+		for _, path := range notFound {
+			result, err := db.Exec("DELETE FROM release WHERE path = ?", path)
+			if err != nil {
+				log.Fatal(err)
+			}
+			nAffected, err := result.RowsAffected()
+			if err != nil {
+				log.Fatal(err)
+			}
+			if nAffected != 0 {
+				fmt.Printf("DELETE %s\n", path)
+			}
 		}
 	}
 }

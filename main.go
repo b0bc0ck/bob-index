@@ -27,10 +27,8 @@ func clean(db *sql.DB, glroot string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	var count int
 	var path string
-	notFound := make([]string, 1, 5)
-	count = 0
+	var notFound []string
 
 	for rows.Next() {
 		err := rows.Scan(&path)
@@ -38,8 +36,7 @@ func clean(db *sql.DB, glroot string) {
 			log.Panic(err)
 		}
 		if _, err := os.Stat(glroot + path); errors.Is(err, os.ErrNotExist) {
-			notFound[count] = path
-			count++
+			notFound = append(notFound, path)
 		}
 
 	}

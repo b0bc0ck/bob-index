@@ -40,10 +40,6 @@ func clean(db *sql.DB, glroot string) {
 		if _, err := os.Stat(glroot + path); errors.Is(err, os.ErrNotExist) {
 			notFound[count] = path
 			count++
-			//_, err := db.Exec("DELETE FROM release WHERE path = ?", path)
-			//if err != nil {
-			//	log.Fatal(err)
-			//}
 		}
 
 	}

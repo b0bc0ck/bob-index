@@ -65,7 +65,7 @@ func scan(db *sql.DB, glroot string, path string) {
 		Callback: func(osPathname string, de *godirwalk.Dirent) error {
 			if de.IsDir() {
 				checkme := strings.ToLower(osPathname)
-				if strings.Contains(checkme, "/subs") || strings.Contains(checkme, "/sample") || strings.Contains(checkme, "/proof") || strings.Contains(checkme, "complete") || strings.Contains(checkme, "imdb") || strings.Contains(checkme, "/cd") || strings.Contains(checkme, "/disc") {
+				if strings.Contains(checkme, "/subs") || strings.Contains(checkme, "/sample") || strings.Contains(checkme, "/proof") || strings.Contains(checkme, " complete ") || strings.Contains(checkme, " incomplete ") || strings.Contains(checkme, "imdb") || strings.Contains(checkme, "/cd") || strings.Contains(checkme, "/disc") {
 					return godirwalk.SkipThis
 				}
 				// Add to sqlite database here, making sure to check that we dont already have an entry for it, or if it moved

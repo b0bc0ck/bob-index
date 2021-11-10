@@ -99,6 +99,7 @@ func search(db *sql.DB, search string, limit int) {
 	defer rows.Close()
 
 	var nResults int
+	var sResults []string
 	var path string
 
 	nResults = 0
@@ -108,7 +109,17 @@ func search(db *sql.DB, search string, limit int) {
 		if err != nil {
 			log.Panic(err)
 		}
-		fmt.Printf("%s\n", path)
+		sResults = append(sResults, path)
+	}
+	if nResults != 0 {
+		var rResults []string
+		for i := range sResults {
+			n := sResults[len(sResults)-1-i]
+			rResults = append(rResults, n)
+		}
+		for _, path := range rResults {
+			fmt.Printf("%s\n", path)
+		}
 	}
 	fmt.Printf("\n%v result(s) found with a limit of %v.\n", nResults, limit)
 }

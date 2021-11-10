@@ -91,7 +91,7 @@ func scan(db *sql.DB, glroot string, path string) {
 }
 
 func search(db *sql.DB, search string, limit int) {
-	fmt.Printf("Searching for %s...\n", search)
+	fmt.Printf("Searching for %s...\n\n", search)
 	rows, err := db.Query("SELECT path FROM release WHERE name LIKE ? ORDER BY path DESC LIMIT ?", "%"+search+"%", limit)
 	if err != nil {
 		log.Panic(err)
@@ -110,7 +110,7 @@ func search(db *sql.DB, search string, limit int) {
 		}
 		fmt.Printf("%s\n", path)
 	}
-	fmt.Printf("%v result(s) found with a limit of %v.\n", nResults, limit)
+	fmt.Printf("\n%v result(s) found with a limit of %v.\n", nResults, limit)
 }
 
 func main() {

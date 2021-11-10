@@ -59,6 +59,20 @@ func clean(db *sql.DB, glroot string) {
 	}
 }
 
+func predir(db *sql.DB, search string) {
+	rows, err := db.Query("SELECT path FROM release WHERE name = ? LIMIT 1", search)
+	if err != nil {
+		log.Panic(err)
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		os.Exit(2)
+	} else {
+		os.Exit(0)
+	}
+}
+
 func scan(db *sql.DB, glroot string, path string) {
 	err := godirwalk.Walk(glroot+path, &godirwalk.Options{
 		Unsorted: true,
@@ -148,6 +162,8 @@ func main() {
 	switch *M {
 	case "clean":
 		clean(db, *G+"/site")
+	case "predir":
+		predir(db, *s)
 	case "scan":
 		scan(db, *G+"/site", *P)
 	case "search":

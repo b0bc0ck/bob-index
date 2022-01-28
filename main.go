@@ -19,6 +19,9 @@ var G = flag.String("G", "/home/ftpd/glftpd", "gl root path")
 var P = flag.String("P", "/mp3", "Scan path (inside glroot)")
 var L = flag.Int("L", 50, "Limit number of search results")
 var s = flag.String("s", "test", "search string")
+var p = flag.String("p", "/private/", "path for individual add or delete")
+var n = flag.String("n", "test", "name of release for individual add or delete")
+var d = flag.Bool("d", false, "debug")
 
 func addentry(db *sql.DB, path string, name string) {
 	result, err := db.Exec("INSERT or IGNORE INTO release(path, lower, name) VALUES (?, ?, ?)", path, strings.ToLower(name), name)
@@ -29,7 +32,7 @@ func addentry(db *sql.DB, path string, name string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if nAffected != 0 {
+	if (nAffected != 0) && (*d == true) {
 		fmt.Printf("INSERT %s\n", path)
 	}
 
@@ -44,7 +47,7 @@ func delentry(db *sql.DB, path string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if nAffected != 0 {
+	if (nAffected != 0) && (*d == true) {
 		fmt.Printf("DELETE %s\n", path)
 	}
 
@@ -148,6 +151,16 @@ func search(db *sql.DB, search string, limit int) {
 	fmt.Printf("\n%v result(s) found with a limit of %v.\n", nResults, limit)
 }
 
+func add(db *sql.DB, path string, release string) {
+	path = strings.ReplaceAll(path, "/site", "")
+	addentry(db, path+"/"+release, release)
+}
+
+func del(db *sql.DB, path string, release string) {
+	path = strings.ReplaceAll(path, "/site", "")
+	delentry(db, path+"/"+release)
+}
+
 func main() {
 	flag.Parse()
 	db, err := sql.Open("sqlite3", "file:"+*G+*D+"?cache=shared&mode=rwc&_journal_mode=WAL")
@@ -178,6 +191,10 @@ func main() {
 		scan(db, *G+"/site", *P)
 	case "search":
 		search(db, *s, *L)
+	case "add":
+		add(db, *p, *n)
+	case "delete":
+		del(db, *p, *n)
 	default:
 		search(db, *s, *L)
 	}

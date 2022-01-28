@@ -20,6 +20,36 @@ var P = flag.String("P", "/mp3", "Scan path (inside glroot)")
 var L = flag.Int("L", 50, "Limit number of search results")
 var s = flag.String("s", "test", "search string")
 
+func addentry(db *sql.DB, path string, name string) {
+	result, err := db.Exec("INSERT or IGNORE INTO release(path, lower, name) VALUES (?, ?, ?)", path, strings.ToLower(name), name)
+	if err != nil {
+		log.Fatal(err)
+	}
+	nAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if nAffected != 0 {
+		fmt.Printf("INSERT %s\n", path)
+	}
+
+}
+
+func delentry(db *sql.DB, path string) {
+	result, err := db.Exec("DELETE FROM release WHERE path = ?", path)
+	if err != nil {
+		log.Fatal(err)
+	}
+	nAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if nAffected != 0 {
+		fmt.Printf("DELETE %s\n", path)
+	}
+
+}
+
 func clean(db *sql.DB, glroot string) {
 	fmt.Printf("Cleaning up database at %v\n", *G+*D)
 	// Compile a slice with all release paths that no longer exist
@@ -44,17 +74,7 @@ func clean(db *sql.DB, glroot string) {
 	// Delete the results from the database
 	if len(notFound) != 0 {
 		for _, path := range notFound {
-			result, err := db.Exec("DELETE FROM release WHERE path = ?", path)
-			if err != nil {
-				log.Fatal(err)
-			}
-			nAffected, err := result.RowsAffected()
-			if err != nil {
-				log.Fatal(err)
-			}
-			if nAffected != 0 {
-				fmt.Printf("DELETE %s\n", path)
-			}
+			delentry(db, path)
 		}
 	}
 }
@@ -84,17 +104,7 @@ func scan(db *sql.DB, glroot string, path string) {
 				}
 				// Add to sqlite database here, making sure to check that we dont already have an entry for it, or if it moved
 				glpath := strings.ReplaceAll(osPathname, glroot, "")
-				result, err := db.Exec("INSERT or IGNORE INTO release(path, lower, name) VALUES (?, ?, ?)", glpath, strings.ToLower(de.Name()), de.Name())
-				if err != nil {
-					log.Fatal(err)
-				}
-				nAffected, err := result.RowsAffected()
-				if err != nil {
-					log.Fatal(err)
-				}
-				if nAffected != 0 {
-					fmt.Printf("INSERT %s\n", glpath)
-				}
+				addentry(db, glpath, string(de.Name()))
 			}
 			return nil
 		},

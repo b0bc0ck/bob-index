@@ -153,7 +153,11 @@ func search(db *sql.DB, search string, limit int) {
 
 func add(db *sql.DB, path string, release string) {
 	path = strings.ReplaceAll(path, "/site", "")
-	addentry(db, path+"/"+release, release)
+	checkme := strings.ToLower(path + "/" + release)
+	if strings.Contains(checkme, "/subs") || strings.Contains(checkme, "/sample") || strings.Contains(checkme, "/proof") || strings.Contains(checkme, "/cd") || strings.Contains(checkme, "/disc") {
+	} else {
+		addentry(db, path+"/"+release, release)
+	}
 }
 
 func del(db *sql.DB, path string, release string) {

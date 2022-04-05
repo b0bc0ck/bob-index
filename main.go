@@ -102,7 +102,7 @@ func scan(db *sql.DB, glroot string, path string) {
 		Callback: func(osPathname string, de *godirwalk.Dirent) error {
 			if de.IsDir() {
 				checkme := strings.ToLower(osPathname)
-				if strings.Contains(checkme, "/subs") || strings.Contains(checkme, "/sample") || strings.Contains(checkme, "/proof") || strings.Contains(checkme, " complete ") || strings.Contains(checkme, " incomplete ") || strings.Contains(checkme, "imdb") || strings.Contains(checkme, "/cd") || strings.Contains(checkme, "/dvd") || strings.Contains(checkme, "/disc") {
+				if strings.Contains(checkme, "/subs") || strings.Contains(checkme, "/sample") || strings.Contains(checkme, "/proof") || strings.Contains(checkme, " complete ") || strings.Contains(checkme, " incomplete ") || strings.Contains(checkme, "imdb") || strings.Contains(checkme, "/cd") || strings.Contains(checkme, "/dvd") || strings.Contains(checkme, "/disc") || strings.Contains(checkme, "/cover") {
 					return godirwalk.SkipThis
 				}
 				// Add to sqlite database here, making sure to check that we dont already have an entry for it, or if it moved
@@ -154,7 +154,7 @@ func search(db *sql.DB, search string, limit int) {
 func add(db *sql.DB, path string, release string) {
 	path = strings.ReplaceAll(path, "/site", "")
 	checkme := strings.ToLower(path + "/" + release)
-	if strings.Contains(checkme, "/subs") || strings.Contains(checkme, "/sample") || strings.Contains(checkme, "/proof") || strings.Contains(checkme, "/cd") || strings.Contains(checkme, "/dvd") || strings.Contains(checkme, "/disc") {
+	if strings.Contains(checkme, "/subs") || strings.Contains(checkme, "/sample") || strings.Contains(checkme, "/proof") || strings.Contains(checkme, "/cd") || strings.Contains(checkme, "/dvd") || strings.Contains(checkme, "/disc") || strings.Contains(checkme, "/cover") {
 	} else {
 		addentry(db, path+"/"+release, release)
 	}

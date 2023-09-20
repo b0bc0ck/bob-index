@@ -13,7 +13,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var M = flag.String("M", "search", "Mode selection (clean, scan, search)")
+var M = flag.String("M", "search", "Mode selection (clean, predir, scan, search, add, delete) search is default")
 var D = flag.String("D", "/ftp-data/bob/bob-index.db", "Location of database")
 var G = flag.String("G", "/home/ftpd/glftpd", "gl root path")
 var P = flag.String("P", "/mp3", "Scan path (inside glroot)")
@@ -21,6 +21,7 @@ var L = flag.Int("L", 50, "Limit number of search results")
 var s = flag.String("s", "test", "search string")
 var p = flag.String("p", "/private/", "path for individual add or delete")
 var n = flag.String("n", "test", "name of release for individual add or delete")
+var c = flag.Bool("c", false, "case sensitivity (we dont care by default)")
 var d = flag.Bool("d", false, "debug")
 
 func addentry(db *sql.DB, path string, name string) {
@@ -83,7 +84,13 @@ func clean(db *sql.DB, glroot string) {
 }
 
 func predir(db *sql.DB, search string) {
-	rows, err := db.Query("SELECT path FROM release WHERE name = ? LIMIT 1", search)
+	var rows *sql.Rows
+	var err error
+	if *c == true {
+		rows, err = db.Query("SELECT path FROM release WHERE name = ? LIMIT 1", search)
+	} else {
+		rows, err = db.Query("SELECT path FROM release WHERE name LIKE ? ORDER BY path DESC LIMIT 1", "%"+search+"%")
+	}
 	if err != nil {
 		log.Panic(err)
 	}

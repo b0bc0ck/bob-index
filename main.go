@@ -89,7 +89,7 @@ func predir(db *sql.DB, search string) {
 	if *c == true {
 		rows, err = db.Query("SELECT path FROM release WHERE name = ? LIMIT 1", search)
 	} else {
-		rows, err = db.Query("SELECT path FROM release WHERE name LIKE ? ORDER BY path DESC LIMIT 1", "%"+search+"%")
+		rows, err = db.Query("SELECT path FROM release WHERE name LIKE ? ORDER BY path DESC LIMIT 1", search)
 	}
 	if err != nil {
 		log.Panic(err)

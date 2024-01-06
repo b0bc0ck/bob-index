@@ -24,8 +24,9 @@ var p = flag.String("p", "/private/", "path for individual add or delete")
 var n = flag.String("n", "test", "name of release for individual add or delete")
 var c = flag.Bool("c", false, "case sensitivity (we dont care by default)")
 var d = flag.Bool("d", false, "debug")
+var db *sql.DB
 
-func addentry(db *sql.DB, path string, name string) {
+func addentry(path string, name string) {
 	result, err := db.Exec("INSERT or IGNORE INTO release(path, lower, name) VALUES (?, ?, ?)", path, strings.ToLower(name), name)
 	if err != nil {
 		log.Fatal(err)
@@ -40,7 +41,7 @@ func addentry(db *sql.DB, path string, name string) {
 
 }
 
-func delentry(db *sql.DB, path string) {
+func delentry(path string) {
 	result, err := db.Exec("DELETE FROM release WHERE path = ?", path)
 	if err != nil {
 		log.Fatal(err)
@@ -55,7 +56,7 @@ func delentry(db *sql.DB, path string) {
 
 }
 
-func clean(db *sql.DB, glroot string) {
+func clean(glroot string) {
 	fmt.Printf("Cleaning up database at %v\n", *G+*D)
 	// Compile a slice with all release paths that no longer exist
 	rows, err := db.Query("SELECT path FROM release")
@@ -79,12 +80,12 @@ func clean(db *sql.DB, glroot string) {
 	// Delete the results from the database
 	if len(notFound) != 0 {
 		for _, path := range notFound {
-			delentry(db, path)
+			delentry(path)
 		}
 	}
 }
 
-func predir(db *sql.DB, search string) {
+func predir(search string) {
 	var rows *sql.Rows
 	var err error
 	if *c == true {
@@ -112,14 +113,14 @@ func filter(path string, di fs.DirEntry, err error) error {
 		} else {
 			// Add to sqlite database here, making sure to check that we dont already have an entry for it, or if it moved
 			glpath := strings.ReplaceAll(path, *G, "")
-			addentry(db, glpath, di.Name())
+			addentry(glpath, di.Name())
 			return nil
 		}
 	}
 	return nil
 }
 
-func scan(db *sql.DB, glroot string, path string) {
+func scan(glroot string, path string) {
 	err := filepath.WalkDir(glroot+path, filter)
 	if err != nil {
 		fmt.Printf("error walking: %v\n", err)
@@ -127,7 +128,7 @@ func scan(db *sql.DB, glroot string, path string) {
 	}
 }
 
-func search(db *sql.DB, search string, limit int) {
+func search(search string, limit int) {
 	fmt.Printf("Searching for %s...\n\n", search)
 	rows, err := db.Query("SELECT path FROM release WHERE name LIKE ? ORDER BY path DESC LIMIT ?", "%"+search+"%", limit)
 	if err != nil {
@@ -161,18 +162,18 @@ func search(db *sql.DB, search string, limit int) {
 	fmt.Printf("\n%v result(s) found with a limit of %v.\n", nResults, limit)
 }
 
-func add(db *sql.DB, path string, release string) {
+func add(path string, release string) {
 	path = strings.ReplaceAll(path, "/site", "")
 	checkme := strings.ToLower(path + "/" + release)
 	if strings.Contains(checkme, "/subs") || strings.Contains(checkme, "/sub") || strings.Contains(checkme, "/sample") || strings.Contains(checkme, "/proof") || strings.Contains(checkme, "/cd") || strings.Contains(checkme, "/dvd") || strings.Contains(checkme, "/disc") || strings.Contains(checkme, "/cover") {
 	} else {
-		addentry(db, path+"/"+release, release)
+		addentry(path+"/"+release, release)
 	}
 }
 
-func del(db *sql.DB, path string, release string) {
+func del(path string, release string) {
 	path = strings.ReplaceAll(path, "/site", "")
-	delentry(db, path+"/"+release)
+	delentry(path + "/" + release)
 }
 
 func main() {
@@ -198,18 +199,18 @@ func main() {
 	}
 	switch *M {
 	case "clean":
-		clean(db, *G+"/site")
+		clean(*G + "/site")
 	case "predir":
-		predir(db, *s)
+		predir(*s)
 	case "scan":
-		scan(db, *G+"/site", *P)
+		scan(*G+"/site", *P)
 	case "search":
-		search(db, *s, *L)
+		search(*s, *L)
 	case "add":
-		add(db, *p, *n)
+		add(*p, *n)
 	case "delete":
-		del(db, *p, *n)
+		del(*p, *n)
 	default:
-		search(db, *s, *L)
+		search(*s, *L)
 	}
 }

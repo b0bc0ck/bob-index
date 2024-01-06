@@ -5,11 +5,12 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
-	"github.com/karrick/godirwalk"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -103,24 +104,26 @@ func predir(db *sql.DB, search string) {
 	}
 }
 
-func scan(db *sql.DB, glroot string, path string) {
-	err := godirwalk.Walk(glroot+path, &godirwalk.Options{
-		Unsorted: true,
-		Callback: func(osPathname string, de *godirwalk.Dirent) error {
-			if de.IsDir() {
-				checkme := strings.ToLower(osPathname)
-				if strings.Contains(checkme, "/subs") || strings.Contains(checkme, "/sub") || strings.Contains(checkme, "/sample") || strings.Contains(checkme, "/proof") || strings.Contains(checkme, " complete ") || strings.Contains(checkme, " incomplete ") || strings.Contains(checkme, "imdb") || strings.Contains(checkme, "/cd") || strings.Contains(checkme, "/dvd") || strings.Contains(checkme, "/disc") || strings.Contains(checkme, "/cover") {
-					return godirwalk.SkipThis
-				}
-				// Add to sqlite database here, making sure to check that we dont already have an entry for it, or if it moved
-				glpath := strings.ReplaceAll(osPathname, glroot, "")
-				addentry(db, glpath, string(de.Name()))
-			}
+func filter(path string, di fs.DirEntry, err error) error {
+	if di.IsDir() {
+		checkme := strings.ToLower(path)
+		if strings.Contains(checkme, "/subs") || strings.Contains(checkme, "/sub") || strings.Contains(checkme, "/sample") || strings.Contains(checkme, "/proof") || strings.Contains(checkme, " complete ") || strings.Contains(checkme, " incomplete ") || strings.Contains(checkme, "imdb") || strings.Contains(checkme, "/cd") || strings.Contains(checkme, "/dvd") || strings.Contains(checkme, "/disc") || strings.Contains(checkme, "/cover") {
+			return filepath.SkipDir
+		} else {
+			// Add to sqlite database here, making sure to check that we dont already have an entry for it, or if it moved
+			glpath := strings.ReplaceAll(path, *G, "")
+			addentry(db, glpath, di.Name())
 			return nil
-		},
-	})
+		}
+	}
+	return nil
+}
+
+func scan(db *sql.DB, glroot string, path string) {
+	err := filepath.WalkDir(glroot+path, filter)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Printf("error walking: %v\n", err)
+		return
 	}
 }
 

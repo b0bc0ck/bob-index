@@ -1,8 +1,5 @@
 module bob-index
 
-go 1.17
+go 1.21.4
 
-require (
-	github.com/karrick/godirwalk v1.16.1
-	github.com/mattn/go-sqlite3 v1.14.9
-)
+require github.com/mattn/go-sqlite3 v1.14.19

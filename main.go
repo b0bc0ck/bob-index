@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bob-index/database"
 	"database/sql"
 	"errors"
 	"flag"
@@ -24,10 +25,9 @@ var p = flag.String("p", "/private/", "path for individual add or delete")
 var n = flag.String("n", "test", "name of release for individual add or delete")
 var c = flag.Bool("c", false, "case sensitivity (we dont care by default)")
 var d = flag.Bool("d", false, "debug")
-var db *sql.DB
 
 func addentry(path string, name string) {
-	result, err := db.Exec("INSERT or IGNORE INTO release(path, lower, name) VALUES (?, ?, ?)", path, strings.ToLower(name), name)
+	result, err := database.DBCon.Exec("INSERT or IGNORE INTO release(path, lower, name) VALUES (?, ?, ?)", path, strings.ToLower(name), name)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -42,7 +42,7 @@ func addentry(path string, name string) {
 }
 
 func delentry(path string) {
-	result, err := db.Exec("DELETE FROM release WHERE path = ?", path)
+	result, err := database.DBCon.Exec("DELETE FROM release WHERE path = ?", path)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -59,7 +59,7 @@ func delentry(path string) {
 func clean(glroot string) {
 	fmt.Printf("Cleaning up database at %v\n", *G+*D)
 	// Compile a slice with all release paths that no longer exist
-	rows, err := db.Query("SELECT path FROM release")
+	rows, err := database.DBCon.Query("SELECT path FROM release")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -89,9 +89,9 @@ func predir(search string) {
 	var rows *sql.Rows
 	var err error
 	if *c == true {
-		rows, err = db.Query("SELECT path FROM release WHERE name = ? LIMIT 1", search)
+		rows, err = database.DBCon.Query("SELECT path FROM release WHERE name = ? LIMIT 1", search)
 	} else {
-		rows, err = db.Query("SELECT path FROM release WHERE name LIKE ? ORDER BY path DESC LIMIT 1", search)
+		rows, err = database.DBCon.Query("SELECT path FROM release WHERE name LIKE ? ORDER BY path DESC LIMIT 1", search)
 	}
 	if err != nil {
 		log.Panic(err)
@@ -112,7 +112,7 @@ func filter(path string, di fs.DirEntry, err error) error {
 			return filepath.SkipDir
 		} else {
 			// Add to sqlite database here, making sure to check that we dont already have an entry for it, or if it moved
-			glpath := strings.ReplaceAll(path, *G, "")
+			glpath := strings.ReplaceAll(path, *G+"/site", "")
 			addentry(glpath, di.Name())
 			return nil
 		}
@@ -130,7 +130,7 @@ func scan(glroot string, path string) {
 
 func search(search string, limit int) {
 	fmt.Printf("Searching for %s...\n\n", search)
-	rows, err := db.Query("SELECT path FROM release WHERE name LIKE ? ORDER BY path DESC LIMIT ?", "%"+search+"%", limit)
+	rows, err := database.DBCon.Query("SELECT path FROM release WHERE name LIKE ? ORDER BY path DESC LIMIT ?", "%"+search+"%", limit)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -177,12 +177,13 @@ func del(path string, release string) {
 }
 
 func main() {
+	var err error
 	flag.Parse()
-	db, err := sql.Open("sqlite3", "file:"+*G+*D+"?cache=shared&mode=rwc&_journal_mode=WAL")
+	database.DBCon, err = sql.Open("sqlite3", "file:"+*G+*D+"?cache=shared&mode=rwc&_journal_mode=WAL")
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer db.Close()
+	defer database.DBCon.Close()
 
 	// Create and initialize the database if it does not exist
 	if _, err := os.Stat(*G + *D); errors.Is(err, os.ErrNotExist) {
@@ -191,7 +192,7 @@ func main() {
 		CREATE TABLE release (path text, lower text, name text, UNIQUE(path));
 		DELETE FROM release;
 		`
-		_, err := db.Exec(sqlStmt)
+		_, err := database.DBCon.Exec(sqlStmt)
 		if err != nil {
 			log.Printf("%q: %s\n", err, sqlStmt)
 			return

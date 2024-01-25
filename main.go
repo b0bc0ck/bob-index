@@ -130,7 +130,7 @@ func scan(glroot string, path string) {
 
 func search(search string, limit int) {
 	fmt.Printf("Searching for %s...\n\n", search)
-	rows, err := database.DBCon.Query("SELECT path FROM release WHERE name LIKE ? ORDER BY path DESC LIMIT ?", "%"+search+"%", limit)
+	rows, err := database.DBCon.Query("SELECT path FROM release WHERE name LIKE ? ORDER BY path DESC", "%"+search+"%")
 	if err != nil {
 		log.Panic(err)
 	}
@@ -152,8 +152,10 @@ func search(search string, limit int) {
 	if nResults != 0 {
 		var rResults []string
 		for i := range sResults {
-			n := sResults[len(sResults)-1-i]
-			rResults = append(rResults, n)
+			if i < limit {
+				n := sResults[len(sResults)-1-i]
+				rResults = append(rResults, n)
+			}
 		}
 		for _, path := range rResults {
 			fmt.Printf("%s\n", path)

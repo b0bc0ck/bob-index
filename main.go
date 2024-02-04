@@ -107,8 +107,8 @@ func predir(search string) {
 
 func filter(path string, di fs.DirEntry, err error) error {
 	if di.IsDir() {
-		checkme := strings.ToLower(path)
-		if strings.Contains(checkme, "/subs") || strings.Contains(checkme, "/sub") || strings.Contains(checkme, "/sample") || strings.Contains(checkme, "/proof") || strings.Contains(checkme, " complete ") || strings.Contains(checkme, " incomplete ") || strings.Contains(checkme, "imdb") || strings.Contains(checkme, "/cd") || strings.Contains(checkme, "/dvd") || strings.Contains(checkme, "/disc") || strings.Contains(checkme, "/cover") || strings.Contains(checkme, "/_") {
+		checkme := strings.ToLower(path + "/")
+		if strings.Contains(checkme, "/subs/") || strings.Contains(checkme, "/sub/") || strings.Contains(checkme, "/sample/") || strings.Contains(checkme, "/proof/") || strings.Contains(checkme, " complete ") || strings.Contains(checkme, " incomplete ") || strings.Contains(checkme, "imdb") || strings.Contains(checkme, "/cd") || strings.Contains(checkme, "/dvd") || strings.Contains(checkme, "/disc") || strings.Contains(checkme, "/cover/") || strings.Contains(checkme, "/_") {
 			return filepath.SkipDir
 		} else {
 			// Add to sqlite database here, making sure to check that we dont already have an entry for it, or if it moved

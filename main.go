@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -105,23 +106,38 @@ func predir(search string) {
 	}
 }
 
-func filter(path string, di fs.DirEntry, err error) error {
+func filter(checkme string) bool {
+	disc := regexp.MustCompile(`/disc[0-9]`)
+	discmatch := disc.MatchString(checkme)
+	cd := regexp.MustCompile(`/cd[0-9]`)
+	cdmatch := cd.MatchString(checkme)
+	dvd := regexp.MustCompile(`/dvd[0-9]`)
+	dvdmatch := dvd.MatchString(checkme)
+	if strings.Contains(checkme, "/subs/") || strings.Contains(checkme, "/sub/") || strings.Contains(checkme, "/sample/") || strings.Contains(checkme, "/proof/") || strings.Contains(checkme, "/cover/") || strings.Contains(checkme, " complete ") || strings.Contains(checkme, " incomplete ") || strings.Contains(checkme, "imdb") || strings.Contains(checkme, "/_") || discmatch || cdmatch || dvdmatch {
+		return true
+	} else {
+		return false
+	}
+}
+
+func walkfilter(path string, di fs.DirEntry, err error) error {
 	if di.IsDir() {
 		checkme := strings.ToLower(path + "/")
-		if strings.Contains(checkme, "/subs/") || strings.Contains(checkme, "/sub/") || strings.Contains(checkme, "/sample/") || strings.Contains(checkme, "/proof/") || strings.Contains(checkme, " complete ") || strings.Contains(checkme, " incomplete ") || strings.Contains(checkme, "imdb") || strings.Contains(checkme, "/cd") || strings.Contains(checkme, "/dvd") || strings.Contains(checkme, "/disc") || strings.Contains(checkme, "/cover/") || strings.Contains(checkme, "/_") {
-			return filepath.SkipDir
-		} else {
+		result := filter(checkme)
+		if result == false {
 			// Add to sqlite database here, making sure to check that we dont already have an entry for it, or if it moved
 			glpath := strings.ReplaceAll(path, *G+"/site", "")
 			addentry(glpath, di.Name())
 			return nil
+		} else {
+			return filepath.SkipDir
 		}
 	}
 	return nil
 }
 
 func scan(glroot string, path string) {
-	err := filepath.WalkDir(glroot+path, filter)
+	err := filepath.WalkDir(glroot+path, walkfilter)
 	if err != nil {
 		fmt.Printf("error walking: %v\n", err)
 		return
@@ -167,8 +183,8 @@ func search(search string, limit int) {
 func add(path string, release string) {
 	path = strings.ReplaceAll(path, "/site", "")
 	checkme := strings.ToLower(path + "/" + release)
-	if strings.Contains(checkme, "/subs") || strings.Contains(checkme, "/sub") || strings.Contains(checkme, "/sample") || strings.Contains(checkme, "/proof") || strings.Contains(checkme, "/cd") || strings.Contains(checkme, "/dvd") || strings.Contains(checkme, "/disc") || strings.Contains(checkme, "/cover") {
-	} else {
+	result := filter(checkme)
+	if result == false {
 		addentry(path+"/"+release, release)
 	}
 }

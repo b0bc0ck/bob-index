@@ -107,11 +107,11 @@ func predir(search string) {
 }
 
 func filter(checkme string) bool {
-	disc := regexp.MustCompile(`/disc[0-9]`)
+	disc := regexp.MustCompile(`/disc[_]?[0-9][0-9]?`)
 	discmatch := disc.MatchString(checkme)
-	cd := regexp.MustCompile(`/cd[0-9]`)
+	cd := regexp.MustCompile(`/cd[_]?[0-9][0-9]?`)
 	cdmatch := cd.MatchString(checkme)
-	dvd := regexp.MustCompile(`/dvd[0-9]`)
+	dvd := regexp.MustCompile(`/dvd[_]?[0-9][0-9]?`)
 	dvdmatch := dvd.MatchString(checkme)
 	if strings.Contains(checkme, "/subs/") || strings.Contains(checkme, "/sub/") || strings.Contains(checkme, "/sample/") || strings.Contains(checkme, "/proof/") || strings.Contains(checkme, "/cover/") || strings.Contains(checkme, " complete ") || strings.Contains(checkme, " incomplete ") || strings.Contains(checkme, "imdb") || strings.Contains(checkme, "/_") || discmatch || cdmatch || dvdmatch {
 		return true

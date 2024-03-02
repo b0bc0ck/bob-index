@@ -21,6 +21,7 @@ var D = flag.String("D", "/ftp-data/bob/bob-index.db", "Location of database")
 var G = flag.String("G", "/home/ftpd/glftpd", "gl root path")
 var P = flag.String("P", "/mp3", "Scan path (inside glroot)")
 var L = flag.Int("L", 50, "Limit number of search results")
+var l = flag.String("l", "", "symlink search results")
 var s = flag.String("s", "test", "search string")
 var p = flag.String("p", "/private/", "path for individual add or delete")
 var n = flag.String("n", "test", "name of release for individual add or delete")
@@ -173,8 +174,17 @@ func search(search string, limit int) {
 				rResults = append(rResults, n)
 			}
 		}
+		if *l != "" {
+			fmt.Printf("Processing symlink creation for %v...", *l)
+		}
 		for _, path := range rResults {
-			fmt.Printf("%s\n", path)
+			if *l != "" {
+				pathparts := strings.Split(path, "/")
+				release := pathparts[len(pathparts)-1]
+				os.Symlink("../../"+path, release)
+			} else {
+				fmt.Printf("%s\n", path)
+			}
 		}
 	}
 	fmt.Printf("\n%v result(s) found with a limit of %v.\n", nResults, limit)
